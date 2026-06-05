@@ -1,6 +1,8 @@
 using CakeIS.Api.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,10 +21,35 @@ builder.Services.AddHttpClient<CakeIS.Api.Services.IWhatsAppService, CakeIS.Api.
 builder.Services.AddDbContext<CakeDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// --- JWT Authentication ---
+var jwtKey    = builder.Configuration["JwtSettings:Key"]!;
+var jwtIssuer = builder.Configuration["JwtSettings:Issuer"]!;
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer           = true,
+            ValidateAudience         = true,
+            ValidateLifetime         = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer              = jwtIssuer,
+            ValidAudience            = jwtIssuer,
+            IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
-        policy => policy.WithOrigins("http://localhost:5173", "http://127.0.0.1:5173")
+        policy => policy.WithOrigins(
+                            "http://localhost:5173",
+                            "http://127.0.0.1:5173",
+                            "http://localhost:5174",
+                            "http://127.0.0.1:5174")
                         .AllowAnyMethod()
                         .AllowAnyHeader());
 });
@@ -40,15 +67,32 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseCors("AllowFrontend");
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<CakeDbContext>();
-    // Because the frontend defaults to CategoryId = 1, we must ensure it exists!
     if (!context.Categories.Any())
     {
-        context.Categories.Add(new CakeIS.Api.Models.Category { Name = "Signature", Description = "Our signature cakes" });
+        context.Categories.Add(new CakeIS.Api.Models.Category { Name = "Cakes", Description = "Our signature cakes" });
+        context.Categories.Add(new CakeIS.Api.Models.Category { Name = "Cookies", Description = "Our delicious cookies" });
+        context.SaveChanges();
+    }
+    else
+    {
+        var firstCat = context.Categories.OrderBy(c => c.Id).FirstOrDefault();
+        if (firstCat != null && firstCat.Name == "Signature")
+        {
+            firstCat.Name = "Cakes";
+        }
+        var cookiesCat = context.Categories.FirstOrDefault(c => c.Name == "Cookies");
+        if (cookiesCat == null)
+        {
+            context.Categories.Add(new CakeIS.Api.Models.Category { Name = "Cookies", Description = "Our delicious cookies" });
+        }
         context.SaveChanges();
     }
 }

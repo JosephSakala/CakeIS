@@ -1,5 +1,6 @@
 using CakeIS.Api.Data;
 using CakeIS.Api.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -44,6 +45,7 @@ public class CakesController : ControllerBase
         return cake;
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<ActionResult<Cake>> PostCake([FromForm] CakeDto dto)
     {
@@ -77,6 +79,7 @@ public class CakesController : ControllerBase
         return CreatedAtAction(nameof(GetCake), new { id = cake.Id }, cake);
     }
 
+    [Authorize]
     [HttpPut("{id}")]
     public async Task<IActionResult> PutCake(int id, [FromForm] CakeDto dto)
     {
@@ -115,6 +118,7 @@ public class CakesController : ControllerBase
         return NoContent();
     }
 
+    [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteCake(int id)
     {
