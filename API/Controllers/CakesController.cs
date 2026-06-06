@@ -59,7 +59,8 @@ public class CakesController : ControllerBase
 
         if (dto.Image != null)
         {
-            var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
+            var dataDir = Environment.GetEnvironmentVariable("DATA_DIR") ?? Directory.GetCurrentDirectory();
+            var uploadsDir = Path.Combine(dataDir, "images");
             Directory.CreateDirectory(uploadsDir);
             
             var fileName = Guid.NewGuid().ToString() + Path.GetExtension(dto.Image.FileName);
@@ -93,7 +94,8 @@ public class CakesController : ControllerBase
 
         if (dto.Image != null)
         {
-            var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
+            var dataDir = Environment.GetEnvironmentVariable("DATA_DIR") ?? Directory.GetCurrentDirectory();
+            var uploadsDir = Path.Combine(dataDir, "images");
             Directory.CreateDirectory(uploadsDir);
             var fileName = Guid.NewGuid().ToString() + Path.GetExtension(dto.Image.FileName);
             var filePath = Path.Combine(uploadsDir, fileName);
