@@ -1794,8 +1794,18 @@ function App() {
             
             <div style={{ background: '#faf9f6', padding: '24px', borderRadius: '12px', border: '1px solid rgba(201, 156, 110, 0.2)', marginBottom: '32px' }}>
                 <p style={{ margin: '0 0 16px 0', fontSize: '1.2rem' }}>
-                    <strong style={{ color: 'var(--text-main)' }}>Phone / WhatsApp:</strong> <br/> 
-                    <a href="tel:0975586410" style={{ color: 'var(--accent-color)', textDecoration: 'none', fontWeight: 'bold' }}>0975586410</a>
+                    <strong style={{ color: 'var(--text-main)' }}>Phone / WhatsApp:</strong> <br/>
+                    <a
+                      href="https://wa.me/260975586410"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: '#25D366', textDecoration: 'none', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="22" height="22" fill="#25D366">
+                        <path d="M16 0C7.163 0 0 7.163 0 16c0 2.824.737 5.473 2.027 7.776L0 32l8.443-2.012A15.93 15.93 0 0 0 16 32c8.837 0 16-7.163 16-16S24.837 0 16 0zm0 29.333a13.267 13.267 0 0 1-6.755-1.843l-.484-.287-5.012 1.194 1.222-4.877-.317-.5A13.267 13.267 0 1 1 16 29.333zm7.273-9.93c-.397-.199-2.35-1.159-2.715-1.292-.364-.132-.63-.199-.895.199-.266.397-1.027 1.292-1.26 1.558-.232.265-.465.298-.862.1-.397-.2-1.677-.618-3.194-1.972-1.18-1.053-1.976-2.352-2.208-2.75-.232-.397-.025-.611.175-.809.18-.178.397-.465.596-.697.199-.232.265-.397.397-.662.132-.265.066-.497-.033-.696-.1-.199-.895-2.158-1.227-2.955-.323-.776-.65-.671-.895-.683l-.762-.013c-.265 0-.696.1-1.06.497-.364.397-1.392 1.36-1.392 3.317 0 1.957 1.425 3.848 1.624 4.113.199.265 2.806 4.283 6.8 6.004.951.41 1.692.655 2.27.839.954.303 1.822.26 2.509.158.765-.114 2.35-.96 2.682-1.888.332-.928.332-1.724.232-1.888-.099-.165-.364-.265-.762-.464z"/>
+                      </svg>
+                      0975 586 410
+                    </a>
                 </p>
                 <p style={{ margin: 0, fontSize: '1.2rem' }}>
                     <strong style={{ color: 'var(--text-main)' }}>Email Address:</strong> <br/> 
