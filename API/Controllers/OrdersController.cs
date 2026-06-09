@@ -182,6 +182,7 @@ public class PlaceOrderDto
         var orderItems = new List<OrderItem>();
         decimal totalAmount = 0;
         var cakeNames = new List<string>();
+        var emailItems = new List<CakeIS.Api.Services.OrderEmailItem>(); // built during loop while cake is in scope
 
         foreach (var item in itemsToProcess)
         {
@@ -201,6 +202,15 @@ public class PlaceOrderDto
             totalAmount += cake.Price * item.Quantity;
             cakeNames.Add(cake.Name == "Custom Cake Request" ? $"Custom: {item.CustomDescription}" : cake.Name);
             orderItems.Add(new OrderItem { CakeId = cake.Id, Quantity = item.Quantity, UnitPrice = cake.Price });
+
+            // Capture email item now while cake is in scope (nav property will be null after SaveChanges)
+            emailItems.Add(new CakeIS.Api.Services.OrderEmailItem
+            {
+                Name      = cake.Name == "Custom Cake Request" ? $"Custom: {item.CustomDescription}" : cake.Name,
+                Quantity  = item.Quantity,
+                UnitPrice = cake.Price,
+                ImageUrl  = cake.ImageUrl
+            });
         }
 
         var order = new Order
@@ -233,37 +243,25 @@ public class PlaceOrderDto
         if (!string.IsNullOrEmpty(customer.Email))
         {
             var apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL") ?? "http://localhost:5020";
-            var emailItems = order.OrderItems
-                .Where(oi => oi.Cake != null)
-                .Select(oi => new CakeIS.Api.Services.OrderEmailItem
-                {
-                    Name      = oi.Cake!.Name,
-                    Quantity  = oi.Quantity,
-                    UnitPrice = oi.UnitPrice,
-                    ImageUrl  = oi.Cake.ImageUrl
-                }).ToList();
-
-            _ = Task.Run(async () =>
+            try
             {
-                try
-                {
-                    await _email.SendOrderConfirmationAsync(
-                        customer.Email,
-                        customer.FirstName ?? "Valued Customer",
-                        order.Id,
-                        emailItems,
-                        order.TotalAmount,
-                        order.FulfillmentDate,
-                        order.DeliveryMethod,
-                        order.DeliveryAddress,
-                        apiBaseUrl
-                    );
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[Email] Failed to send order confirmation: {ex.Message}");
-                }
-            });
+                await _email.SendOrderConfirmationAsync(
+                    customer.Email,
+                    customer.FirstName ?? "Valued Customer",
+                    order.Id,
+                    emailItems,
+                    order.TotalAmount,
+                    order.FulfillmentDate,
+                    order.DeliveryMethod,
+                    order.DeliveryAddress,
+                    apiBaseUrl
+                );
+                Console.WriteLine($"[Email] Confirmation sent to {customer.Email} for order #{order.Id}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Email] Failed to send order confirmation to {customer.Email}: {ex.Message}");
+            }
         }
 
         return Ok(order);
