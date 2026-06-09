@@ -91,15 +91,71 @@ public class PlaceOrderDto
     {
         var order = await _context.Orders
             .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Cake)
+            .Include(o => o.Customer)
             .FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound("Order not found.");
 
+        var oldStatus = order.Status;
         order.Status = dto.Status;
         foreach (var item in order.OrderItems)
         {
             item.Status = dto.Status;
         }
         await _context.SaveChangesAsync();
+
+        if (order.Customer != null && !string.IsNullOrEmpty(order.Customer.Email))
+        {
+            var apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL") ?? "http://localhost:5020";
+            var emailItems = order.OrderItems.Select(oi => new CakeIS.Api.Services.OrderEmailItem
+            {
+                Name      = oi.Cake?.Name == "Custom Cake Request" ? $"Custom: {oi.Cake.Description}" : (oi.Cake?.Name ?? "Unknown Item"),
+                Quantity  = oi.Quantity,
+                UnitPrice = oi.UnitPrice,
+                ImageUrl  = oi.Cake?.ImageUrl
+            }).ToList();
+
+            if (oldStatus == "Order Received" && (dto.Status == "Payment Confirmed" || dto.Status == "Baking" || dto.Status == "Completed"))
+            {
+                try
+                {
+                    await _email.SendOrderConfirmationAsync(
+                        order.Customer.Email,
+                        order.Customer.FirstName ?? "Valued Customer",
+                        order.Id,
+                        emailItems,
+                        order.TotalAmount,
+                        order.FulfillmentDate,
+                        order.DeliveryMethod,
+                        order.DeliveryAddress,
+                        apiBaseUrl,
+                        true
+                    );
+                    Console.WriteLine($"[Email] Post-payment confirmation sent to {order.Customer.Email} for order #{order.Id}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Email] Failed to send post-payment order confirmation to {order.Customer.Email}: {ex.Message}");
+                }
+            }
+
+            if (oldStatus != "Baking" && dto.Status == "Baking")
+            {
+                try
+                {
+                    await _email.SendBakingStartedAsync(
+                        order.Customer.Email,
+                        order.Customer.FirstName ?? "Valued Customer",
+                        order.Id
+                    );
+                    Console.WriteLine($"[Email] Baking Started email sent to {order.Customer.Email} for order #{order.Id}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Email] Failed to send Baking Started email to {order.Customer.Email}: {ex.Message}");
+                }
+            }
+        }
 
         return NoContent();
     }
@@ -220,7 +276,7 @@ public class PlaceOrderDto
             DeliveryMethod = dto.DeliveryMethod,
             DeliveryAddress = dto.DeliveryAddress,
             TotalAmount = totalAmount,
-            Status = "Pending",
+            Status = "Order Received",
             OrderItems = orderItems
         };
 
@@ -235,11 +291,10 @@ public class PlaceOrderDto
 
         if (customer.IsWhatsApp && !string.IsNullOrEmpty(customer.PhoneNumber))
         {
-            var customerMsg = $"Hello {customer.FirstName}! 🎂\nThank you for ordering from iCakes & Cookies. Your order (#{order.Id}) for {itemsSummary} has been received and is Pending review.\nKeep track of your order status on our website using your Track ID: {order.Id}!";
+            var customerMsg = $"Hello {customer.FirstName}! 🎂\nThank you for ordering from iCakes & Cookies. Your order (#{order.Id}) for {itemsSummary} has been received!\n\n*Payment Details (Mobile Money):*\nNetwork: Airtel Money\nAccount Name: Mwangala Lutangu\nNumber: 0975586410\n\nPlease send your payment of K{order.TotalAmount:F2} via Airtel Money to complete your order. A confirmation email will be sent once payment is received. Track your order status using Track ID: {order.Id}!";
             await _whatsapp.SendMessageAsync(customer.PhoneNumber, customerMsg);
         }
 
-        // Email confirmation
         if (!string.IsNullOrEmpty(customer.Email))
         {
             var apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL") ?? "http://localhost:5020";
@@ -254,13 +309,14 @@ public class PlaceOrderDto
                     order.FulfillmentDate,
                     order.DeliveryMethod,
                     order.DeliveryAddress,
-                    apiBaseUrl
+                    apiBaseUrl,
+                    false
                 );
-                Console.WriteLine($"[Email] Confirmation sent to {customer.Email} for order #{order.Id}");
+                Console.WriteLine($"[Email] Order Received (Awaiting Payment) email sent to {customer.Email} for order #{order.Id}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Email] Failed to send order confirmation to {customer.Email}: {ex.Message}");
+                Console.WriteLine($"[Email] Failed to send Order Received email to {customer.Email}: {ex.Message}");
             }
         }
 

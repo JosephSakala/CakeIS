@@ -327,12 +327,12 @@ function App() {
                       
                       let computedOrderStatus = o.status;
                       const allCompleted = updatedItems.every(oi => oi.status === 'Completed');
-                      const allPending = updatedItems.every(oi => oi.status === 'Pending');
+                      const allPending = updatedItems.every(oi => oi.status === 'Order Received');
                       
                       if (allCompleted) {
                           computedOrderStatus = 'Completed';
                       } else if (allPending) {
-                          computedOrderStatus = 'Pending';
+                          computedOrderStatus = 'Order Received';
                       } else {
                           computedOrderStatus = 'Baking';
                       }
@@ -702,7 +702,7 @@ function App() {
     // Calculations
     const totalOrdersCount = orders.length;
     const completedOrdersCount = orders.filter(o => o.status === 'Completed').length;
-    const activeOrdersCount = orders.filter(o => o.status === 'Pending' || o.status === 'Baking').length;
+    const activeOrdersCount = orders.filter(o => o.status === 'Order Received' || o.status === 'Payment Confirmed' || o.status === 'Baking').length;
     const totalRevenue = orders.reduce((sum, o) => sum + parseFloat(o.totalAmount || 0), 0);
     const totalCakesSold = orders.reduce((sum, o) => 
       sum + o.orderItems.reduce((oiSum, oi) => oiSum + (oi.quantity || 0), 0)
@@ -790,16 +790,18 @@ function App() {
     const deliveryStrokeLength = totalSplit > 0 ? (deliveryCount / totalSplit) * circumference : 0;
 
     // Fulfillment breakdown
-    let pendingCount = orders.filter(o => o.status === 'Pending').length;
+    let pendingCount = orders.filter(o => o.status === 'Order Received').length;
+    let paymentCount = orders.filter(o => o.status === 'Payment Confirmed').length;
     let bakingCount = orders.filter(o => o.status === 'Baking').length;
     let completedCount = orders.filter(o => o.status === 'Completed').length;
 
     if (!hasRealData) {
       pendingCount = 5;
+      paymentCount = 2;
       bakingCount = 10;
       completedCount = 30;
     }
-    const totalStatusCount = pendingCount + bakingCount + completedCount;
+    const totalStatusCount = pendingCount + paymentCount + bakingCount + completedCount;
 
     return (
       <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
@@ -1099,11 +1101,22 @@ function App() {
               {/* Pending Status Progress */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', fontWeight: '500' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: 'var(--text-muted)' }}>●</span> Pending Review</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: 'var(--text-muted)' }}>●</span> Order Received</span>
                   <span style={{ fontWeight: 'bold' }}>{pendingCount} ({totalStatusCount > 0 ? Math.round((pendingCount / totalStatusCount) * 100) : 0}%)</span>
                 </div>
                 <div style={{ background: 'rgba(201, 156, 110, 0.1)', height: '12px', borderRadius: '6px', width: '100%', overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${totalStatusCount > 0 ? (pendingCount / totalStatusCount) * 100 : 0}%`, background: '#8c7f73', borderRadius: '6px' }} />
+                </div>
+              </div>
+
+              {/* Payment Confirmed Status Progress */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', fontWeight: '500' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: '#f5a623' }}>●</span> Payment Confirmed</span>
+                  <span style={{ fontWeight: 'bold' }}>{paymentCount} ({totalStatusCount > 0 ? Math.round((paymentCount / totalStatusCount) * 100) : 0}%)</span>
+                </div>
+                <div style={{ background: 'rgba(201, 156, 110, 0.1)', height: '12px', borderRadius: '6px', width: '100%', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${totalStatusCount > 0 ? (paymentCount / totalStatusCount) * 100 : 0}%`, background: '#f5a623', borderRadius: '6px' }} />
                 </div>
               </div>
 
@@ -1348,7 +1361,7 @@ function App() {
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px', marginLeft: order.orderItems.length > 1 ? '26px' : '0' }}>
                                               <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Status:</span>
                                               <select 
-                                                  value={oi.status || 'Pending'} 
+                                                  value={oi.status || 'Order Received'} 
                                                   onChange={(e) => handleItemStatusChange(order.id, oi.id, e.target.value)}
                                                   style={{ 
                                                       padding: '4px 8px', borderRadius: '6px', 
@@ -1357,7 +1370,8 @@ function App() {
                                                       fontSize: '0.8rem', fontWeight: '600', outline: 'none', cursor: 'pointer' 
                                                   }}
                                               >
-                                                  <option value="Pending">Pending</option>
+                                                  <option value="Order Received">Order Received</option>
+                                                  <option value="Payment Confirmed">Payment Confirmed</option>
                                                   <option value="Baking">Baking</option>
                                                   <option value="Completed">Completed</option>
                                               </select>
@@ -1401,7 +1415,8 @@ function App() {
                                               fontWeight: '600', outline: 'none', cursor: 'pointer' 
                                           }}
                                       >
-                                          <option value="Pending">Pending</option>
+                                          <option value="Order Received">Order Received</option>
+                                          <option value="Payment Confirmed">Payment Confirmed</option>
                                           <option value="Baking">Baking</option>
                                           <option value="Completed">Completed</option>
                                       </select>
@@ -1748,7 +1763,7 @@ function App() {
                                         background: oi.status === 'Completed' ? 'rgba(37, 211, 102, 0.1)' : oi.status === 'Baking' ? 'rgba(201, 156, 110, 0.1)' : 'rgba(0,0,0,0.05)',
                                         color: oi.status === 'Completed' ? '#25D366' : oi.status === 'Baking' ? 'var(--accent-color)' : 'var(--text-muted)'
                                     }}>
-                                        {oi.status || 'Pending'}
+                                        {oi.status || 'Order Received'}
                                     </span>
                                 </div>
                             ))}
@@ -1766,7 +1781,7 @@ function App() {
                     <div style={{ marginTop: '24px' }}>
                         <p style={{ fontWeight: 'bold', marginBottom: '12px' }}>Production Status:</p>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f4eadd', padding: '12px', borderRadius: '8px' }}>
-                            <span style={{ fontWeight: trackResult.status.toLowerCase() === 'pending' ? 'bold' : 'normal', color: trackResult.status.toLowerCase() === 'pending' ? 'var(--accent-color)' : 'var(--text-muted)' }}>1. Pending</span>
+                            <span style={{ fontWeight: trackResult.status.toLowerCase() === 'order received' ? 'bold' : 'normal', color: trackResult.status.toLowerCase() === 'order received' ? 'var(--accent-color)' : 'var(--text-muted)' }}>1. Order Received</span>
                             <span style={{ color: 'var(--text-muted)' }}>→</span>
                             <span style={{ fontWeight: trackResult.status.toLowerCase() === 'baking' ? 'bold' : 'normal', color: trackResult.status.toLowerCase() === 'baking' ? 'var(--accent-color)' : 'var(--text-muted)' }}>2. Baking</span>
                             <span style={{ color: 'var(--text-muted)' }}>→</span>

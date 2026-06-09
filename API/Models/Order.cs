@@ -9,8 +9,8 @@ public class Order
     public DateTime OrderDate { get; set; } = DateTime.UtcNow;
     public decimal TotalAmount { get; set; }
     
-    // Status can be: Pending, Preparing, Completed, Cancelled
-    public string Status { get; set; } = "Pending";
+    // Status can be: Order Received, Baking, Completed, Cancelled
+    public string Status { get; set; } = "Order Received";
     public string? AdminResponse { get; set; }
     
     public DateTime FulfillmentDate { get; set; } = DateTime.UtcNow.AddDays(1);

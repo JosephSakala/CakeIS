@@ -11,7 +11,14 @@ public interface IEmailService
         DateTime fulfillmentDate,
         string deliveryMethod,
         string? deliveryAddress,
-        string apiBaseUrl
+        string apiBaseUrl,
+        bool isPaid = false
+    );
+
+    Task SendBakingStartedAsync(
+        string toEmail,
+        string customerName,
+        int orderId
     );
 }
 
