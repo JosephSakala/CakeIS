@@ -33,7 +33,7 @@ public class GmailEmailService : IEmailService
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress(senderName, senderEmail));
         message.To.Add(new MailboxAddress(customerName, toEmail));
-        message.Subject = $"🎂 Order Confirmed! Your Order #{orderId} - iCakes & Cookies";
+        message.Subject = $"Order #{orderId} Received - iCakes and Cookies";
 
         // Build items HTML rows
         var itemsHtml = string.Join("", items.Select(item =>
@@ -149,48 +149,6 @@ public class GmailEmailService : IEmailService
             </td>
           </tr>
 
-          <!-- Payment Details -->
-          <tr>
-            <td style=""padding:20px 0 0;"">
-              <div style=""background:#ffffff;border-radius:16px;padding:28px 32px;box-shadow:0 2px 20px rgba(201,156,110,0.12);border:1px solid #f0e8dc;"">
-                <h3 style=""margin:0 0 16px;color:#2d1b00;font-size:1rem;text-transform:uppercase;letter-spacing:1px;"">💳 Payment Instructions</h3>
-                <p style=""margin:0 0 16px;color:#8c6a3f;font-size:0.9rem;"">Please complete your payment via <strong>Airtel Money</strong> using the details below:</p>
-
-                <div style=""background:linear-gradient(135deg,#e8003a08,#e8003a12);border:2px solid #e8003a30;border-radius:12px;padding:20px 24px;"">
-                  <table cellpadding=""0"" cellspacing=""0"" style=""width:100%;"">
-                    <tr>
-                      <td style=""padding:6px 0;"">
-                        <span style=""color:#8c6a3f;font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;"">Network</span>
-                        <div style=""color:#2d1b00;font-weight:700;font-size:1.05rem;margin-top:2px;"">📱 Airtel Money</div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style=""padding:6px 0;border-top:1px solid #e8003a20;"">
-                        <span style=""color:#8c6a3f;font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;"">Account Name</span>
-                        <div style=""color:#2d1b00;font-weight:700;font-size:1.05rem;margin-top:2px;"">Mwangala Lutango</div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style=""padding:6px 0;border-top:1px solid #e8003a20;"">
-                        <span style=""color:#8c6a3f;font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;"">Number</span>
-                        <div style=""color:#2d1b00;font-weight:800;font-size:1.4rem;letter-spacing:2px;margin-top:2px;"">0975 586 410</div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style=""padding:6px 0;border-top:1px solid #e8003a20;"">
-                        <span style=""color:#8c6a3f;font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;"">Amount to Send</span>
-                        <div style=""color:#e8003a;font-weight:800;font-size:1.4rem;margin-top:2px;"">K{totalAmount:F2}</div>
-                      </td>
-                    </tr>
-                  </table>
-                </div>
-
-                <p style=""margin:16px 0 0;color:#8c6a3f;font-size:0.85rem;text-align:center;"">
-                  ⚠️ Please send your payment reference to us via WhatsApp at <strong>0975 586 410</strong> after paying.
-                </p>
-              </div>
-            </td>
-          </tr>
 
           <!-- Footer -->
           <tr>
