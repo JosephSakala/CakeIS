@@ -43,11 +43,13 @@ public class PlaceOrderDto
     {
         private readonly CakeDbContext _context;
         private readonly CakeIS.Api.Services.IWhatsAppService _whatsapp;
+        private readonly CakeIS.Api.Services.IEmailService _email;
 
-        public OrdersController(CakeDbContext context, CakeIS.Api.Services.IWhatsAppService whatsapp)
+        public OrdersController(CakeDbContext context, CakeIS.Api.Services.IWhatsAppService whatsapp, CakeIS.Api.Services.IEmailService email)
         {
             _context = context;
             _whatsapp = whatsapp;
+            _email = email;
         }
 
     [Authorize]
@@ -225,6 +227,43 @@ public class PlaceOrderDto
         {
             var customerMsg = $"Hello {customer.FirstName}! 🎂\nThank you for ordering from iCakes & Cookies. Your order (#{order.Id}) for {itemsSummary} has been received and is Pending review.\nKeep track of your order status on our website using your Track ID: {order.Id}!";
             await _whatsapp.SendMessageAsync(customer.PhoneNumber, customerMsg);
+        }
+
+        // Email confirmation
+        if (!string.IsNullOrEmpty(customer.Email))
+        {
+            var apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL") ?? "http://localhost:5020";
+            var emailItems = order.OrderItems
+                .Where(oi => oi.Cake != null)
+                .Select(oi => new CakeIS.Api.Services.OrderEmailItem
+                {
+                    Name      = oi.Cake!.Name,
+                    Quantity  = oi.Quantity,
+                    UnitPrice = oi.UnitPrice,
+                    ImageUrl  = oi.Cake.ImageUrl
+                }).ToList();
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _email.SendOrderConfirmationAsync(
+                        customer.Email,
+                        customer.FirstName ?? "Valued Customer",
+                        order.Id,
+                        emailItems,
+                        order.TotalAmount,
+                        order.FulfillmentDate,
+                        order.DeliveryMethod,
+                        order.DeliveryAddress,
+                        apiBaseUrl
+                    );
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Email] Failed to send order confirmation: {ex.Message}");
+                }
+            });
         }
 
         return Ok(order);

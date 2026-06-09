@@ -18,6 +18,9 @@ builder.Services.AddSwaggerGen();
 // Inject WhatsApp Notification Subsystem
 builder.Services.AddHttpClient<CakeIS.Api.Services.IWhatsAppService, CakeIS.Api.Services.TwilioWhatsAppService>();
 
+// Inject Email Service
+builder.Services.AddSingleton<CakeIS.Api.Services.IEmailService, CakeIS.Api.Services.GmailEmailService>();
+
 // --- SQLite path: use /data/cake_is.db in production (persistent volume), else local file ---
 var dataDir = Environment.GetEnvironmentVariable("DATA_DIR") ?? Directory.GetCurrentDirectory();
 var dbPath = Path.Combine(dataDir, "cake_is.db");
